@@ -183,8 +183,8 @@ install_font() {
   fi
   zip="$_tmpdir/$FONT_NAME.zip"
   run mkdir -p "$dir"
-  run curl -fsSLo "$zip" "$url"
-  run unzip -o "$zip" -d "$dir"
+  run curl -fsSLo "$zip" "$url" || return 1
+  run unzip -o "$zip" -d "$dir" || return 1
   if [ "$OS" = "linux" ]; then
     run fc-cache -f "$dir"
   fi
@@ -193,6 +193,36 @@ install_font() {
   fi
   log "installed $FONT_NAME Nerd Font to $dir"
 }
+
+bootstrap_tmux() {
+  local tpm="$HOME/.config/tmux/plugins/tpm"
+  if [ -d "$tpm" ]; then
+    log "tpm present, skipping clone"
+  else
+    run git clone https://github.com/tmux-plugins/tpm "$tpm" || return 1
+  fi
+  run "$tpm/bin/install_plugins"
+}
+
+print_summary() {
+  cat <<'EOF'
+
+────────────────────────────────────────────────────────────
+Bootstrap complete.
+
+Next steps (manual, intentionally not automated):
+  • Terminal font: either select it "JetBrainsMono Nerd Font" in your
+    terminal emulator, OR keep a plain Monospace font and rely on
+    fontconfig fallback for glyphs. Do NOT set a Nerd Font as the
+    primary font if you hit double-spaced text (see README Fonts).
+  • Start a fresh shell:  exec zsh
+  • Inside tmux, plugins are already installed; reload with: prefix + r
+────────────────────────────────────────────────────────────
+EOF
+}
+
+# TEMPORARY stub — replaced by the real implementation in Task 8.
+ensure_repo() { :; }
 
 usage() {
   cat <<'EOF'
@@ -227,7 +257,13 @@ main() {
   detect_os
   log "detected OS=$OS PKG=$PKG"
   log "bootstrap starting (dry-run=$DRY_RUN)"
-  # subsequent tasks wire steps in here
+  ensure_repo
+  install_pkgs
+  install_third_party
+  stow_packages
+  install_font   || warn "font step failed (non-fatal); see README Fonts"
+  bootstrap_tmux || warn "tmux plugin step failed (non-fatal)"
+  print_summary
   log "bootstrap done"
 }
 

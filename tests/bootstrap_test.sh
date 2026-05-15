@@ -170,5 +170,22 @@ echo "$out" | grep -qi "skip" \
   || notok "install_font not idempotent"
 export HOME="$OLDHOME"; rm -rf "$TMPHOME"; DRY_RUN=0; OS=""
 
+# --- bootstrap_tmux (dry-run) ---
+DRY_RUN=1
+TMPHOME="$(mktemp -d)"; OLDHOME="$HOME"; export HOME="$TMPHOME"
+out="$(bootstrap_tmux 2>&1)"
+echo "$out" | grep -q "plugins/tpm" \
+  && ok "bootstrap_tmux clones tpm" || notok "bootstrap_tmux no tpm clone"
+echo "$out" | grep -q "install_plugins" \
+  && ok "bootstrap_tmux installs plugins" || notok "bootstrap_tmux no plugin install"
+export HOME="$OLDHOME"; rm -rf "$TMPHOME"; DRY_RUN=0
+
+# --- end-to-end dry run via the script entrypoint ---
+e2e="$(BOOTSTRAP_UNAME=Linux bash "$SCRIPT" --dry-run 2>&1)"
+echo "$e2e" | grep -q "bootstrap starting" && ok "e2e: starts" || notok "e2e: no start"
+echo "$e2e" | grep -q "bootstrap done"     && ok "e2e: finishes" || notok "e2e: no finish"
+echo "$e2e" | grep -qi "JetBrainsMono Nerd Font\|fontconfig fallback" \
+  && ok "e2e: prints font reminder" || notok "e2e: missing font reminder"
+
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
