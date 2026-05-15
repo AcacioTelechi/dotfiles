@@ -243,22 +243,30 @@ Append to `tests/bootstrap_test.sh`:
 ```bash
 # --- backup_if_conflict ---
 TMP="$(mktemp -d)"
+DRY_RUN=0   # prior run() tests left DRY_RUN=1; backup_if_conflict uses `run mv`
 # Case A: real file -> backed up
 echo original > "$TMP/.zshrc"
 backup_if_conflict "$TMP/.zshrc"
-[ ! -e "$TMP/.zshrc" ] && [ -f "$TMP/.zshrc.pre-stow.bak" ] \
-  && ok "backup_if_conflict moves real file to .pre-stow.bak" \
-  || notok "backup_if_conflict did not back up real file"
-# Case B: nonexistent path -> no-op, no error
-backup_if_conflict "$TMP/.does-not-exist" \
-  && ok "backup_if_conflict no-op on missing path" \
-  || notok "backup_if_conflict errored on missing path"
-# Case C: existing symlink -> left alone (stow -R handles it)
+if [ ! -e "$TMP/.zshrc" ] && [ -f "$TMP/.zshrc.pre-stow.bak" ]; then
+  ok "backup_if_conflict moves real file to .pre-stow.bak"
+else
+  notok "backup_if_conflict did not back up real file"
+fi
+# Case B: nonexistent path -> no-op, returns 0, no stray .bak
+if backup_if_conflict "$TMP/.does-not-exist" \
+   && [ ! -e "$TMP/.does-not-exist.pre-stow.bak" ]; then
+  ok "backup_if_conflict no-op on missing path"
+else
+  notok "backup_if_conflict errored or created stray .bak on missing path"
+fi
+# Case C: existing symlink -> left alone (stow -R handles its own links)
 ln -s /tmp "$TMP/.link"
 backup_if_conflict "$TMP/.link"
-[ -L "$TMP/.link" ] && [ ! -e "$TMP/.link.pre-stow.bak" ] \
-  && ok "backup_if_conflict leaves symlinks alone" \
-  || notok "backup_if_conflict touched a symlink"
+if [ -L "$TMP/.link" ] && [ ! -e "$TMP/.link.pre-stow.bak" ]; then
+  ok "backup_if_conflict leaves symlinks alone"
+else
+  notok "backup_if_conflict touched a symlink"
+fi
 rm -rf "$TMP"
 ```
 
@@ -284,26 +292,66 @@ backup_if_conflict() {
   return 0
 }
 
-# stow_packages — back up conflicts, then (re)stow each package.
+# stow_packages — let stow ITSELF report genuine conflicts (simulate
+# mode), back up only those, then (re)stow. Idempotent by construction:
+# an already-stowed package reports zero conflicts, so a re-run backs up
+# nothing and just re-creates the same links.
+#
+# Why not walk files and pre-compute targets? Because stow tree-folds a
+# package dir into a single directory symlink. After that, a per-file
+# target like ~/.config/tmux/tmux.conf is a REAL file reached THROUGH a
+# folded parent symlink — its own `-L` test is false — so a naive
+# backup-then-restow would mv the real repo file into *.pre-stow.bak on
+# re-run, corrupting the dotfiles. Delegating conflict detection to stow
+# avoids reimplementing (incorrectly) what stow already knows.
 stow_packages() {
   have stow || die "stow not installed (install_pkgs should have handled this)"
-  local pkg f target
+  [ -d "$REPO_DIR" ] || die "REPO_DIR not found: $REPO_DIR"
+  local pkg line rel
   for pkg in $STOW_PACKAGES; do
-    # Every tracked file under pkg/ maps to $HOME/<relpath-after-pkg>
-    while IFS= read -r f; do
-      target="$HOME/${f#"$pkg"/}"
-      backup_if_conflict "$target"
-    done < <(cd "$REPO_DIR" && find "$pkg" -type f -not -path '*/.git/*' | sed "s|^|$REPO_DIR/|" | sed "s|$REPO_DIR/||")
-    run stow -d "$REPO_DIR" -t "$HOME" -R "$pkg"
+    # `stow -n -R` (simulate) prints conflict lines such as:
+    #   * existing target is neither a link nor a directory: .zshrc
+    #   * existing target is not owned by stow: .config/x
+    # and exits nonzero when conflicts exist — capture, don't abort.
+    while IFS= read -r line; do
+      case "$line" in
+        *"existing target is "*": "*)
+          rel="${line##*": "}"
+          backup_if_conflict "$HOME/$rel"
+          ;;
+      esac
+    done < <(stow -n -R -d "$REPO_DIR" -t "$HOME" "$pkg" 2>&1 || true)
+    run stow -R -d "$REPO_DIR" -t "$HOME" "$pkg"
     log "stowed $pkg"
   done
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **Step 4: Run test to verify it passes + prove re-run idempotency**
 
-Run: `bash tests/bootstrap_test.sh`
-Expected: PASS — Cases A/B/C ok.
+Run: `bash tests/bootstrap_test.sh` → expect `10 passed, 0 failed`, exit 0.
+
+The harness only covers `backup_if_conflict`; `stow_packages` must be proven
+re-run safe out-of-band. In a sandbox `$HOME`, run `stow_packages` TWICE
+against the real repo and assert the run created **zero** `.pre-stow.bak`
+anywhere inside `$REPO_DIR` and left the repo's tracked files intact:
+
+```bash
+T=$(mktemp -d)
+for i in 1 2; do
+  HOME="$T" bash -c \
+    'BOOTSTRAP_SOURCE_ONLY=1 . '"$PWD"'/bootstrap.sh; REPO_DIR='"$PWD"'; DRY_RUN=0; stow_packages'
+done
+n=$(find "$PWD" -name '*.pre-stow.bak' | wc -l)   # MUST be 0
+git -C "$PWD" status --porcelain                    # MUST show only bootstrap.sh + tests
+rm -rf "$T"
+echo "pre-stow.bak inside repo: $n (must be 0)"
+```
+
+Expected: both runs exit 0; `n` is 0; `git status` shows no deletions/renames
+of dotfiles. If any `.pre-stow.bak` appears inside the repo, restore them
+(`for f in $(find "$PWD" -name '*.pre-stow.bak'); do mv "$f" "${f%.pre-stow.bak}"; done`)
+and treat the task as failed.
 
 - [ ] **Step 5: Lint + commit**
 
