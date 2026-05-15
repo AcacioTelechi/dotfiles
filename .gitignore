@@ -12,3 +12,6 @@
 # zsh runtime (never dotfiles)
 .zsh_history
 .zcompdump*
+
+# tmux plugins (managed by tpm, not committed)
+tmux/.config/tmux/plugins/
