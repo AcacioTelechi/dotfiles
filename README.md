@@ -20,6 +20,9 @@ dotfiles/
 | `zsh` | shell | `sudo apt-get install -y zsh` |
 | `tmux` (≥ 3.1) | multiplexer; config uses `terminal-features` | `sudo apt-get install -y tmux` |
 | `neovim` | editor | `sudo apt-get install -y neovim` |
+| `ripgrep` | telescope `live_grep` | `sudo apt-get install -y ripgrep` |
+| `zoxide` | smart `cd` (`z`) in zsh | `sudo apt-get install -y zoxide` |
+| Node | `pyright` LSP server | via nvm (already configured in `.zshrc`) |
 | `oh-my-posh` | zsh prompt | see <https://ohmyposh.dev/docs/installation/linux> |
 | A **Nerd Font** | prompt/icon glyphs | see [Fonts](#fonts) below |
 
@@ -58,14 +61,22 @@ stow -nv -t ~ nvim          # dry-run: show what would happen
 
 ### nvim
 - Plugin manager: [lazy.nvim](https://github.com/folke/lazy.nvim) (auto-bootstraps on first launch).
-- Plugins: `catppuccin`, `telescope.nvim` (+ `plenary`, `fzf-native`).
 - Leader key is `Space`.
-- Telescope keymaps (`<leader>ff`, `fg`, `fb`, `fh`) are **lazily required
-  inside callbacks** and registered *after* `lazy.setup()`. Requiring
-  `telescope.builtin` at the top of `init.lua` crashes startup before the
-  plugin is installed — don't move it back up.
-- First launch downloads plugins (`make` runs for `fzf-native`); let the
-  lazy.nvim UI finish.
+- Plugins (all lazy-loaded via `event`/`keys`):
+  - `catppuccin` — colorscheme
+  - `telescope.nvim` (+ `plenary`, `fzf-native`) — fuzzy finder, loads on
+    first `<leader>f*` keypress; uses the `keys =` spec (not top-level
+    `require`) so it never blocks startup.
+  - `nvim-treesitter` — syntax/indent, auto-installs parsers
+  - `mason.nvim` + `mason-lspconfig` + `nvim-lspconfig` — LSP; `lua_ls`
+    and `pyright` installed automatically (pyright needs Node on `PATH`)
+  - `nvim-cmp` + `LuaSnip` — completion
+  - `which-key.nvim` — popup of keybindings after `<leader>`
+- Keymaps: `<leader>ff/fg/fb/fh` (find files / grep / buffers / help);
+  on LSP attach — `gd`, `gr`, `K`, `<leader>rn`, `<leader>ca`.
+- First launch downloads plugins (`make` runs for `fzf-native`, Treesitter
+  parsers + Mason servers download); let the lazy.nvim UI finish.
+- `live_grep` needs `ripgrep` on `PATH` (`sudo apt-get install -y ripgrep`).
 
 ### tmux
 - Prefix remapped `C-b` → `C-a`.
@@ -73,10 +84,26 @@ stow -nv -t ~ nvim          # dry-run: show what would happen
 - `escape-time 10` and `focus-events on` for a lag-free Neovim experience.
 - Mouse on, vi copy-mode, 1-based indexing, 50k scrollback.
 - Reload without restarting: `prefix` then `r`.
+- Plugins via [tpm](https://github.com/tmux-plugins/tpm) (cloned to
+  `~/.config/tmux/plugins/`, git-ignored): `vim-tmux-navigator`
+  (`C-h/j/k/l` across tmux panes **and** nvim splits — needs the nvim-side
+  plugin too), `tmux-resurrect` + `tmux-continuum` (auto save/restore
+  sessions across reboots). **One-time:** clone tpm, then `prefix` + `I`
+  inside tmux to install:
+  ```sh
+  git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm
+  ```
 
 ### zsh
 - `oh-my-zsh` + `zinit` (syntax-highlighting, autosuggestions, completions),
   `fzf` keybindings, `oh-my-posh` prompt.
+- zinit plugins are **deferred** (`zinit ice wait lucid`) so the prompt
+  paints before they attach — faster startup. They appear a split-second
+  after the first prompt; this is expected.
+- [`zoxide`](https://github.com/ajeetdsouza/zoxide) for smart `cd`:
+  `z <partial>` jumps to your most-used matching dir. Init is guarded by
+  `command -v zoxide` so a missing binary never breaks the shell —
+  install it with `sudo apt-get install -y zoxide`.
 - **oh-my-posh init is guarded by `_OMP_INITIALIZED`.** Re-`source`-ing
   `.zshrc` in the same shell re-wraps ZLE widgets and stacks
   `_omp_call_widget` until `FUNCNEST` blows
@@ -113,7 +140,10 @@ Font changes apply to **new terminal windows**.
 
 | Symptom | Cause / fix |
 |---------|-------------|
-| `module 'telescope.builtin' not found` on nvim start | Something requires telescope before `lazy.setup()`. Keep the keymaps as lazy callbacks. |
+| `module 'telescope.builtin' not found` on nvim start | Something `require`s telescope at the top level before lazy.nvim installs it. Telescope must be loaded via its `keys =` spec — never `require('telescope.builtin')` at file scope. |
+| `live_grep`: "ripgrep not found" | `sudo apt-get install -y ripgrep` |
+| `pyright` LSP doesn't start | Needs Node on `PATH`; with nvm run `nvm use` (or `nvm alias default <ver>`) before launching nvim. |
+| tmux `prefix + I` does nothing | tpm not cloned — `git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm`. |
 | Tofu boxes `` in prompt | No Nerd Font — see [Fonts](#fonts). |
 | `_omp_call_widget: maximum nested function level reached` | You re-`source`d `.zshrc`. Open a new shell (`exec zsh`); the `_OMP_INITIALIZED` guard prevents recurrence. |
 | Every character double-spaced (`t o t a l`) | Terminal font metrics — try the **non-`Mono`** `MesloLGS Nerd Font`; if a plain font also doubles, the issue is the terminal/tmux, not the font. |
