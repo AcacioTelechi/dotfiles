@@ -113,11 +113,11 @@ fi
 # Source Zinit
 source "$ZINIT_HOME/zinit.zsh"
 
-# Add plugins
-zinit ice depth=1; zinit light zsh-users/zsh-syntax-highlighting # Syntax highlighting
-zinit ice depth=1; zinit light zsh-users/zsh-autosuggestions # Autosuggestions
-
-zinit ice depth=1; zinit light zsh-users/zsh-completions # Completions
+# Add plugins — deferred (`wait lucid`) so the prompt paints first and
+# plugins attach a few ms later: noticeably faster shell startup.
+zinit ice wait lucid depth=1; zinit light zsh-users/zsh-syntax-highlighting
+zinit ice wait lucid depth=1 atload'_zsh_autosuggest_start'; zinit light zsh-users/zsh-autosuggestions
+zinit ice wait lucid depth=1 blockf; zinit light zsh-users/zsh-completions
 # Load completions
 autoload -U compinit && compinit
 
@@ -127,6 +127,13 @@ autoload -U compinit && compinit
 if [[ -z "$_OMP_INITIALIZED" ]]; then
   eval "$(oh-my-posh init zsh --config $HOME/.config/ohmyposh/base.toml)"
   _OMP_INITIALIZED=1
+fi
+
+# zoxide — smarter cd: `z <partial>` jumps to your most-used matching dir.
+# Guarded so a missing binary never breaks shell startup.
+# Install: sudo apt-get install -y zoxide
+if command -v zoxide >/dev/null 2>&1; then
+  eval "$(zoxide init zsh)"
 fi
 
 
