@@ -221,8 +221,36 @@ Next steps (manual, intentionally not automated):
 EOF
 }
 
-# TEMPORARY stub — replaced by the real implementation in Task 8.
-ensure_repo() { :; }
+# ensure_repo — if not already inside the dotfiles repo, clone it and
+# re-exec the bootstrap from the clone. Idempotent.
+ensure_repo() {
+  if [ -d "$REPO_DIR/.git" ]; then
+    log "using existing repo at $REPO_DIR"
+    return 0
+  fi
+  # Are we already running from inside a dotfiles checkout?
+  local self_dir
+  self_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  if [ -d "$self_dir/.git" ] && [ -f "$self_dir/bootstrap.sh" ] \
+     && [ -d "$self_dir/nvim" ] && [ -d "$self_dir/tmux" ] && [ -d "$self_dir/zsh" ]; then
+    REPO_DIR="$self_dir"
+    log "running from repo checkout at $REPO_DIR"
+    return 0
+  fi
+  if [ -e "$REPO_DIR" ]; then
+    die "REPO_DIR exists but is not a git repo: $REPO_DIR — remove it and retry"
+  fi
+  log "cloning $REPO_URL -> $REPO_DIR"
+  run git clone "$REPO_URL" "$REPO_DIR"
+  # Re-exec from the fresh clone so the rest of the run uses the real
+  # repo. Only when actually executing — under --dry-run nothing was
+  # cloned, so just return and let the dry-run preview continue.
+  if [ "$DRY_RUN" -eq 0 ]; then
+    # No args needed: --help already exited, --dry-run is excluded by the
+    # surrounding guard, and all other state lives in parse_args globals.
+    exec bash "$REPO_DIR/bootstrap.sh"
+  fi
+}
 
 usage() {
   cat <<'EOF'

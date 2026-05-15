@@ -187,5 +187,16 @@ echo "$e2e" | grep -q "bootstrap done"     && ok "e2e: finishes" || notok "e2e: 
 echo "$e2e" | grep -qi "JetBrainsMono Nerd Font\|fontconfig fallback" \
   && ok "e2e: prints font reminder" || notok "e2e: missing font reminder"
 
+# --- ensure_repo: no-op when already inside the repo ---
+DRY_RUN=1
+REPO_DIR_BAK="$REPO_DIR"
+# Simulate "already in repo": REPO_DIR exists and is a git repo (this checkout)
+REPO_DIR="$HERE/.."
+out="$(ensure_repo 2>&1)"
+echo "$out" | grep -qi "clone" \
+  && notok "ensure_repo should NOT clone when already in repo" \
+  || ok "ensure_repo no-op inside existing repo"
+REPO_DIR="$REPO_DIR_BAK"; DRY_RUN=0
+
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
