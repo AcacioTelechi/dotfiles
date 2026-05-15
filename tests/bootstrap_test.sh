@@ -26,5 +26,16 @@ else
   notok "run() executed despite dry-run"
 fi
 
+# --- detect_os ---
+BOOTSTRAP_UNAME="Linux" detect_os
+assert_eq "detect_os Linux -> OS"  "linux" "$OS"
+assert_eq "detect_os Linux -> PKG" "apt-get" "$PKG"
+BOOTSTRAP_UNAME="Darwin" detect_os
+assert_eq "detect_os Darwin -> OS"  "macos" "$OS"
+assert_eq "detect_os Darwin -> PKG" "brew"  "$PKG"
+( BOOTSTRAP_UNAME="Plan9" detect_os ) 2>/dev/null \
+  && notok "detect_os should reject unknown OS" \
+  || ok "detect_os rejects unknown OS"
+
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

@@ -28,6 +28,18 @@ run() {
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
+OS=""
+PKG=""
+detect_os() {
+  local u
+  u="${BOOTSTRAP_UNAME:-$(uname -s)}"
+  case "$u" in
+    Linux)  OS="linux"; PKG="apt-get" ;;
+    Darwin) OS="macos"; PKG="brew" ;;
+    *) die "unsupported OS: '$u' (Linux and macOS only)" ;;
+  esac
+}
+
 usage() {
   cat <<'EOF'
 Usage: bootstrap.sh [--dry-run] [-h|--help]
@@ -58,6 +70,8 @@ main() {
   parse_args "$@"
   [ "$SHOW_HELP" -eq 1 ] && exit 0
   [ "${EUID:-$(id -u)}" -ne 0 ] || die "do not run as root; sudo is used only where needed"
+  detect_os
+  log "detected OS=$OS PKG=$PKG"
   log "bootstrap starting (dry-run=$DRY_RUN)"
   # subsequent tasks wire steps in here
   log "bootstrap done"
