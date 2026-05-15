@@ -84,12 +84,17 @@ stow -nv -t ~ nvim          # dry-run: show what would happen
 - `escape-time 10` and `focus-events on` for a lag-free Neovim experience.
 - Mouse on, vi copy-mode, 1-based indexing, 50k scrollback.
 - Reload without restarting: `prefix` then `r`.
+- Theme: [`catppuccin/tmux`](https://github.com/catppuccin/tmux) pinned to
+  `#v2.3.0` (v2 API — composes the status bar from modules: session on the
+  left, app + date/time on the right; `mocha` flavor, `rounded` tabs).
+  **Renders Nerd Font glyphs** (window flags, separators) — without a Nerd
+  Font the status bar shows tofu boxes; see [Fonts](#fonts).
 - Plugins via [tpm](https://github.com/tmux-plugins/tpm) (cloned to
   `~/.config/tmux/plugins/`, git-ignored): `vim-tmux-navigator`
   (`C-h/j/k/l` across tmux panes **and** nvim splits — needs the nvim-side
   plugin too), `tmux-resurrect` + `tmux-continuum` (auto save/restore
-  sessions across reboots). **One-time:** clone tpm, then `prefix` + `I`
-  inside tmux to install:
+  sessions across reboots), `catppuccin/tmux` (theme, above).
+  **One-time:** clone tpm, then `prefix` + `I` inside tmux to install:
   ```sh
   git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm
   ```
@@ -144,7 +149,7 @@ Font changes apply to **new terminal windows**.
 | `live_grep`: "ripgrep not found" | `sudo apt-get install -y ripgrep` |
 | `pyright` LSP doesn't start | Needs Node on `PATH`; with nvm run `nvm use` (or `nvm alias default <ver>`) before launching nvim. |
 | tmux `prefix + I` does nothing | tpm not cloned — `git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm`. |
-| Tofu boxes `` in prompt | No Nerd Font — see [Fonts](#fonts). |
+| Tofu boxes `` in prompt **or tmux status bar** | No Nerd Font (or terminal not set to use it) — see [Fonts](#fonts). |
 | `_omp_call_widget: maximum nested function level reached` | You re-`source`d `.zshrc`. Open a new shell (`exec zsh`); the `_OMP_INITIALIZED` guard prevents recurrence. |
 | Every character double-spaced (`t o t a l`) | Terminal font metrics — try the **non-`Mono`** `MesloLGS Nerd Font`; if a plain font also doubles, the issue is the terminal/tmux, not the font. |
 | `stow` creates `~/config` instead of `~/.config/nvim` | Package structure too shallow. A file at `~/.config/nvim/init.lua` must live at `dotfiles/nvim/.config/nvim/init.lua`. |
