@@ -130,5 +130,17 @@ echo "$out" | grep -qF 'DRY-RUN: sh -c /bin/bash -c "$(curl -fsSL https://raw.gi
   || notok "install_pkgs(macos) may have expanded \$(curl) under dry-run"
 DRY_RUN=0
 
+# --- install_third_party (dry-run, all guarded by have/path) ---
+DRY_RUN=1
+OS="linux"
+TMPHOME="$(mktemp -d)"; OLDHOME="$HOME"; export HOME="$TMPHOME"
+# Stub: pretend none of the tools exist by emptying PATH lookups for them.
+out="$( PATH="/usr/bin:/bin" install_third_party 2>&1 )"
+echo "$out" | grep -q 'oh-my-posh' && ok "third_party mentions oh-my-posh" || notok "no oh-my-posh"
+echo "$out" | grep -q 'nvm' && ok "third_party mentions nvm" || notok "no nvm"
+echo "$out" | grep -q 'ohmyzsh\|oh-my-zsh' && ok "third_party mentions oh-my-zsh" || notok "no oh-my-zsh"
+echo "$out" | grep -q 'zinit' && ok "third_party mentions zinit" || notok "no zinit"
+export HOME="$OLDHOME"; rm -rf "$TMPHOME"; DRY_RUN=0; OS=""
+
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

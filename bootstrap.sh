@@ -118,6 +118,49 @@ install_pkgs() {
   fi
 }
 
+install_third_party() {
+  # oh-my-posh
+  if have oh-my-posh; then
+    log "oh-my-posh present, skipping"
+  elif [ "$OS" = "macos" ]; then
+    run brew install jandedobbeleer/oh-my-posh/oh-my-posh
+  else
+    log "installing oh-my-posh"
+    # shellcheck disable=SC2016  # literal: curl runs at exec time, not now
+    run sh -c \
+      'curl -fsSL https://ohmyposh.dev/install.sh | bash -s -- -d "$HOME/.local/bin"'
+  fi
+
+  # nvm + LTS node
+  if [ -d "$HOME/.nvm" ]; then
+    log "nvm present, skipping"
+  else
+    # shellcheck disable=SC2016  # literal: curl runs at exec time, not now
+    run sh -c \
+      'curl -fsSLo- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash'
+  fi
+  # shellcheck disable=SC2016  # literal: $HOME expands in child bash, not now
+  run bash -c '. "$HOME/.nvm/nvm.sh" 2>/dev/null && nvm install --lts || true'
+
+  # oh-my-zsh (unattended)
+  if [ -d "$HOME/.oh-my-zsh" ]; then
+    log "oh-my-zsh present, skipping"
+  else
+    # shellcheck disable=SC2016  # literal: curl runs at exec time, not now
+    run sh -c \
+      'RUNZSH=no CHSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
+  fi
+
+  # zinit
+  if [ -d "$HOME/.local/share/zinit/zinit.git" ]; then
+    log "zinit present, skipping"
+  else
+    # shellcheck disable=SC2016  # literal: curl runs at exec time, not now
+    run sh -c \
+      'bash -c "$(curl --fail --show-error --silent --location https://raw.githubusercontent.com/zdharma-continuum/zinit/HEAD/scripts/install.sh)"'
+  fi
+}
+
 usage() {
   cat <<'EOF'
 Usage: bootstrap.sh [--dry-run] [-h|--help]
