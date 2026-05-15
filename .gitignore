@@ -1,0 +1,14 @@
+# OS / editor cruft
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Backups
+*.bak
+*.backup
+*.orig
+
+# zsh runtime (never dotfiles)
+.zsh_history
+.zcompdump*
