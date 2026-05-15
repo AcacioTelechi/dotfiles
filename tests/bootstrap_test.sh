@@ -110,5 +110,25 @@ else
 fi
 rm -rf "$SB" "$RB" "$BIN"
 
+# --- install_pkgs (dry-run) ---
+DRY_RUN=1
+OS="linux"; PKG="apt-get"
+out="$(install_pkgs 2>&1)"
+echo "$out" | grep -q 'DRY-RUN: sudo apt-get update' \
+  && ok "install_pkgs(linux) runs apt-get update" \
+  || notok "install_pkgs(linux) missing apt-get update"
+echo "$out" | grep -q 'DRY-RUN: sudo DEBIAN_FRONTEND=noninteractive apt-get install -y git stow zsh tmux neovim ripgrep zoxide curl' \
+  && ok "install_pkgs(linux) installs CORE_PKGS" \
+  || notok "install_pkgs(linux) missing CORE_PKGS install"
+OS="macos"; PKG="brew"
+out="$(install_pkgs 2>&1)"
+echo "$out" | grep -q 'DRY-RUN: brew install git stow zsh tmux neovim ripgrep zoxide curl' \
+  && ok "install_pkgs(macos) brew install CORE_PKGS" \
+  || notok "install_pkgs(macos) missing brew install"
+echo "$out" | grep -qF 'DRY-RUN: sh -c /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"' \
+  && ok "install_pkgs(macos) defers curl under dry-run (no network)" \
+  || notok "install_pkgs(macos) may have expanded \$(curl) under dry-run"
+DRY_RUN=0
+
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

@@ -96,6 +96,28 @@ stow_packages() {
   done
 }
 
+ensure_homebrew() {
+  have brew && return 0
+  log "installing Homebrew"
+  # The curl MUST stay inside the single-quoted sh -c string so it runs
+  # only when run() actually executes — otherwise $(...) would expand
+  # (and hit the network) even under --dry-run.
+  run sh -c \
+    '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+}
+
+install_pkgs() {
+  if [ "$OS" = "linux" ]; then
+    run sudo apt-get update
+    # shellcheck disable=SC2086  # word-split CORE_PKGS into separate args
+    run sudo DEBIAN_FRONTEND=noninteractive apt-get install -y $CORE_PKGS
+  else
+    ensure_homebrew
+    # shellcheck disable=SC2086  # word-split CORE_PKGS into separate args
+    run brew install $CORE_PKGS
+  fi
+}
+
 usage() {
   cat <<'EOF'
 Usage: bootstrap.sh [--dry-run] [-h|--help]
