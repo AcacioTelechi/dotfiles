@@ -27,7 +27,7 @@ dotfiles/
 
 ```sh
 # 1. clone
-git clone <your-repo-url> ~/dotfiles
+git clone https://github.com/AcacioTelechi/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 
 # 2. (optional) back up anything stow would clobber
