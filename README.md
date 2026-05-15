@@ -13,6 +13,8 @@ dotfiles/
 
 ## Prerequisites
 
+`bootstrap.sh` installs all of these automatically; the table documents what/why for manual setups.
+
 | Tool | Why | Install (Ubuntu) |
 |------|-----|------------------|
 | `git` | clone this repo | `sudo apt-get install -y git` |
@@ -29,29 +31,25 @@ dotfiles/
 ## Bootstrap (fresh machine)
 
 ```sh
-# 1. clone
+# one command — Linux or macOS, idempotent, safe to re-run
 git clone https://github.com/AcacioTelechi/dotfiles.git ~/dotfiles
-cd ~/dotfiles
-
-# 2. (optional) back up anything stow would clobber
-for f in ~/.zshrc ~/.zprofile ~/.config/nvim ~/.config/tmux; do
-  [ -e "$f" ] && [ ! -L "$f" ] && mv "$f" "$f.pre-stow.bak"
-done
-
-# 3. symlink every package into $HOME
-stow -t ~ nvim tmux zsh
-
-# 4. start a fresh shell
-exec zsh
+cd ~/dotfiles && ./bootstrap.sh          # add --dry-run to preview
 ```
 
-`stow -t ~ <pkg>` creates symlinks from `$HOME` into this repo. Re-running it
-is safe and idempotent — it adopts links that already point here.
+`bootstrap.sh` installs dependencies (apt/brew), stows `nvim tmux zsh`
+(backing up any conflicting real files to `*.pre-stow.bak`), installs
+oh-my-posh / nvm+node / oh-my-zsh / zinit, installs JetBrainsMono Nerd
+Font, and bootstraps tmux plugins. It does **not** change your terminal
+emulator's settings.
+
+For partial or manual use, `stow -t ~ <pkg>` creates symlinks from `$HOME`
+into this repo — the commands below are an alternative to `bootstrap.sh`
+for when you only need specific packages.
 
 ### Useful stow commands
 
 ```sh
-stow  -t ~ nvim          # link the nvim package
+stow -t ~ nvim          # link the nvim package
 stow -R -t ~ nvim          # re-stow (after adding/removing files)
 stow -D -t ~ nvim          # unlink (remove the symlinks)
 stow -nv -t ~ nvim          # dry-run: show what would happen
@@ -94,7 +92,8 @@ stow -nv -t ~ nvim          # dry-run: show what would happen
   (`C-h/j/k/l` across tmux panes **and** nvim splits — needs the nvim-side
   plugin too), `tmux-resurrect` + `tmux-continuum` (auto save/restore
   sessions across reboots), `catppuccin/tmux` (theme, above).
-  **One-time:** clone tpm, then `prefix` + `I` inside tmux to install:
+  **One-time (only if not using `bootstrap.sh`, which does this for you):**
+  clone tpm, then `prefix` + `I` inside tmux to install:
   ```sh
   git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm
   ```
@@ -121,25 +120,17 @@ stow -nv -t ~ nvim          # dry-run: show what would happen
 oh-my-posh's theme uses Nerd Font glyphs. Without a Nerd Font you get tofu
 boxes (``).
 
-```sh
-mkdir -p ~/.local/share/fonts/NerdFonts
-curl -fLo /tmp/Meslo.zip \
-  https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.zip
-unzip -o /tmp/Meslo.zip -d ~/.local/share/fonts/NerdFonts/Meslo
-fc-cache -f ~/.local/share/fonts
-```
+`bootstrap.sh` installs **JetBrainsMono Nerd Font**. Setting it as your
+terminal font is manual, emulator-specific, and often unnecessary. On
+GNOME Terminal/VTE, selecting a patched Nerd Font *family* as the terminal
+font renders every character double-spaced (`t o t a l`). The working fix
+is to keep the profile font as plain `Monospace`: fontconfig automatically
+falls back to the installed Nerd Font for the individual glyphs the prompt
+and tmux status bar need, without affecting ordinary text spacing. See the
+Troubleshooting row "Every character double-spaced (`t o t a l`)".
 
-Then set your **terminal emulator's** font to a Meslo Nerd Font variant (the
-font is a terminal-app setting, not a dotfile). GNOME Terminal, default
-profile, via CLI:
-
-```sh
-P="org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$(gsettings get org.gnome.Terminal.ProfilesList default | tr -d \"'\")/"
-gsettings set "$P" use-system-font false
-gsettings set "$P" font 'MesloLGS Nerd Font 12'
-```
-
-Font changes apply to **new terminal windows**.
+If you do change your terminal font manually, the change applies to
+**new terminal windows** only.
 
 ## Troubleshooting
 
@@ -151,7 +142,7 @@ Font changes apply to **new terminal windows**.
 | tmux `prefix + I` does nothing | tpm not cloned — `git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm`. |
 | Tofu boxes `` in prompt **or tmux status bar** | No Nerd Font (or terminal not set to use it) — see [Fonts](#fonts). |
 | `_omp_call_widget: maximum nested function level reached` | You re-`source`d `.zshrc`. Open a new shell (`exec zsh`); the `_OMP_INITIALIZED` guard prevents recurrence. |
-| Every character double-spaced (`t o t a l`) | Terminal font metrics — try the **non-`Mono`** `MesloLGS Nerd Font`; if a plain font also doubles, the issue is the terminal/tmux, not the font. |
+| Every character double-spaced (`t o t a l`) | Patched Nerd Font *families* set as the terminal font cause this on GNOME Terminal/VTE. Working fix: keep the terminal profile font as plain `Monospace`; fontconfig falls back to the installed Nerd Font for glyphs automatically. |
 | `stow` creates `~/config` instead of `~/.config/nvim` | Package structure too shallow. A file at `~/.config/nvim/init.lua` must live at `dotfiles/nvim/.config/nvim/init.lua`. |
 
 ## Conventions
