@@ -770,8 +770,11 @@ ensure_repo() {
   fi
   log "cloning $REPO_URL -> $REPO_DIR"
   run git clone "$REPO_URL" "$REPO_DIR"
+  # Re-exec from the fresh clone so the rest of the run uses the real
+  # repo. Only when actually executing — under --dry-run nothing was
+  # cloned, so just return and let the dry-run preview continue.
   if [ "$DRY_RUN" -eq 0 ]; then
-    exec bash "$REPO_DIR/bootstrap.sh" $([ "$DRY_RUN" -eq 1 ] && echo --dry-run)
+    exec bash "$REPO_DIR/bootstrap.sh"
   fi
 }
 ```
