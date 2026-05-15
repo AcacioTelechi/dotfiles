@@ -46,23 +46,52 @@ backup_if_conflict() {
   local p="$1"
   if [ -L "$p" ]; then return 0; fi
   if [ -e "$p" ]; then
+    if [ -e "$p.pre-stow.bak" ]; then
+      warn "backup already exists; leaving $p in place (not overwriting $p.pre-stow.bak)"
+      return 0
+    fi
     run mv "$p" "$p.pre-stow.bak"
     log "backed up existing $p -> $p.pre-stow.bak"
   fi
   return 0
 }
 
-# stow_packages — back up conflicts, then (re)stow each package.
+# stow_packages — let stow ITSELF report genuine conflicts (simulate
+# mode), back up only those, then (re)stow. Idempotent by construction:
+# an already-stowed package reports zero conflicts, so a re-run backs up
+# nothing and just re-creates the same links.
+#
+# Why not walk files and pre-compute targets? Because stow tree-folds a
+# package dir into a single directory symlink. After that, a per-file
+# target like ~/.config/tmux/tmux.conf is a REAL file reached THROUGH a
+# folded parent symlink — its own `-L` test is false — so a naive
+# backup-then-restow would mv the real repo file into *.pre-stow.bak on
+# re-run, corrupting the dotfiles. Delegating conflict detection to stow
+# avoids reimplementing (incorrectly) what stow already knows.
 stow_packages() {
   have stow || die "stow not installed (install_pkgs should have handled this)"
-  local pkg f target
+  [ -d "$REPO_DIR" ] || die "REPO_DIR not found: $REPO_DIR"
+  local pkg line rel
   for pkg in $STOW_PACKAGES; do
-    # Every tracked file under pkg/ maps to $HOME/<relpath-after-pkg>
-    while IFS= read -r f; do
-      target="$HOME/${f#"$pkg"/}"
-      backup_if_conflict "$target"
-    done < <(cd "$REPO_DIR" && find "$pkg" -type f -not -path '*/.git/*')
-    run stow -d "$REPO_DIR" -t "$HOME" -R "$pkg"
+    # `stow -n -R` (simulate) writes conflict lines to stderr (hence 2>&1);
+    # a process substitution's exit status is not checked by set -e, so no
+    # || true is needed. Conflict lines look like:
+    #   * existing target is neither a link nor a directory: .zshrc
+    while IFS= read -r line; do
+      case "$line" in
+        *"existing target is "*": "*)
+          # Drop everything up to & including the first ": " AFTER the
+          # static "existing target is " phrase (non-greedy via #), then
+          # drop any " => source" suffix stow appends for the
+          # "stowed to a different package" phrasing. Robust to paths
+          # that themselves contain ": ".
+          rel="${line#*existing target is *: }"
+          rel="${rel%% => *}"
+          backup_if_conflict "$HOME/$rel"
+          ;;
+      esac
+    done < <(stow -n -R -d "$REPO_DIR" -t "$HOME" "$pkg" 2>&1)
+    run stow -R -d "$REPO_DIR" -t "$HOME" "$pkg"
     log "stowed $pkg"
   done
 }

@@ -38,25 +38,77 @@ assert_eq "detect_os Darwin -> PKG" "brew"  "$PKG"
   || ok "detect_os rejects unknown OS"
 
 # --- backup_if_conflict ---
-DRY_RUN=0
 TMP="$(mktemp -d)"
+DRY_RUN=0   # prior run() tests left DRY_RUN=1; backup_if_conflict uses `run mv`
 # Case A: real file -> backed up
 echo original > "$TMP/.zshrc"
 backup_if_conflict "$TMP/.zshrc"
-[ ! -e "$TMP/.zshrc" ] && [ -f "$TMP/.zshrc.pre-stow.bak" ] \
-  && ok "backup_if_conflict moves real file to .pre-stow.bak" \
-  || notok "backup_if_conflict did not back up real file"
-# Case B: nonexistent path -> no-op, no error
-backup_if_conflict "$TMP/.does-not-exist" \
-  && ok "backup_if_conflict no-op on missing path" \
-  || notok "backup_if_conflict errored on missing path"
-# Case C: existing symlink -> left alone (stow -R handles it)
+if [ ! -e "$TMP/.zshrc" ] && [ -f "$TMP/.zshrc.pre-stow.bak" ]; then
+  ok "backup_if_conflict moves real file to .pre-stow.bak"
+else
+  notok "backup_if_conflict did not back up real file"
+fi
+# Case B: nonexistent path -> no-op, returns 0, no stray .bak
+if backup_if_conflict "$TMP/.does-not-exist" \
+   && [ ! -e "$TMP/.does-not-exist.pre-stow.bak" ]; then
+  ok "backup_if_conflict no-op on missing path"
+else
+  notok "backup_if_conflict errored or created stray .bak on missing path"
+fi
+# Case C: existing symlink -> left alone (stow -R handles its own links)
 ln -s /tmp "$TMP/.link"
 backup_if_conflict "$TMP/.link"
-[ -L "$TMP/.link" ] && [ ! -e "$TMP/.link.pre-stow.bak" ] \
-  && ok "backup_if_conflict leaves symlinks alone" \
-  || notok "backup_if_conflict touched a symlink"
+if [ -L "$TMP/.link" ] && [ ! -e "$TMP/.link.pre-stow.bak" ]; then
+  ok "backup_if_conflict leaves symlinks alone"
+else
+  notok "backup_if_conflict touched a symlink"
+fi
 rm -rf "$TMP"
+
+# --- stow_packages conflict parsing (mocked stow) ---
+DRY_RUN=0
+SB="$(mktemp -d)"            # sandbox HOME
+RB="$(mktemp -d)"            # fake repo dir
+BIN="$(mktemp -d)"           # fake stow on PATH
+mkdir -p "$RB/fakepkg"
+# real conflicting targets the parser must back up:
+printf x > "$SB/.simple"
+printf y > "$SB/.weird: name"
+printf z > "$SB/.diffpkg"
+cat > "$BIN/stow" <<'EOS'
+#!/usr/bin/env bash
+# -n present => simulate: emit the 3 GNU-stow conflict phrasings on stderr, exit 1
+for a in "$@"; do [ "$a" = "-n" ] && sim=1; done
+if [ "${sim:-0}" = 1 ]; then
+  {
+    echo "WARNING! stowing fakepkg would cause conflicts:"
+    echo "  * existing target is neither a link nor a directory: .simple"
+    echo "  * existing target is neither a link nor a directory: .weird: name"
+    echo "  * existing target is stowed to a different package: .diffpkg => ../other/.diffpkg"
+  } >&2
+  exit 1
+fi
+exit 0   # real `stow -R` no-op
+EOS
+chmod +x "$BIN/stow"
+(
+  PATH="$BIN:$PATH" HOME="$SB" REPO_DIR="$RB" STOW_PACKAGES="fakepkg"
+  export HOME REPO_DIR STOW_PACKAGES
+  PATH="$BIN:$PATH" bash -c '
+    BOOTSTRAP_SOURCE_ONLY=1 . '"$HERE/../bootstrap.sh"'
+    REPO_DIR="'"$RB"'"; STOW_PACKAGES="fakepkg"; DRY_RUN=0
+    stow_packages
+  '
+)
+if [ -f "$SB/.simple.pre-stow.bak" ] \
+   && [ -f "$SB/.weird: name.pre-stow.bak" ] \
+   && [ -f "$SB/.diffpkg.pre-stow.bak" ] \
+   && [ ! -e "$SB/.simple" ] && [ ! -e "$SB/.weird: name" ] && [ ! -e "$SB/.diffpkg" ]; then
+  ok "stow_packages backs up all conflicts incl. ': ' and '=> src' phrasings"
+else
+  notok "stow_packages parser failed to back up a conflict path correctly"
+fi
+rm -rf "$SB" "$RB" "$BIN"
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
