@@ -161,6 +161,39 @@ install_third_party() {
   fi
 }
 
+install_font() {
+  local dir zip url _tmpdir
+  if [ "$OS" = "macos" ]; then
+    dir="$HOME/Library/Fonts"
+  else
+    dir="$HOME/.local/share/fonts"
+  fi
+  # shellcheck disable=SC2012  # glob existence check, not parsing ls
+  if ls "$dir"/JetBrainsMono*NerdFont*.ttf >/dev/null 2>&1; then
+    log "JetBrainsMono Nerd Font already installed in $dir, skipping"
+    return 0
+  fi
+  url="https://github.com/ryanoasis/nerd-fonts/releases/download/$FONT_VERSION/$FONT_NAME.zip"
+  # mktemp only in the live path so --dry-run has zero side effects;
+  # dry-run uses a deterministic placeholder path (never created).
+  if [ "$DRY_RUN" -eq 0 ]; then
+    _tmpdir="$(mktemp -d)"
+  else
+    _tmpdir="${TMPDIR:-/tmp}"
+  fi
+  zip="$_tmpdir/$FONT_NAME.zip"
+  run mkdir -p "$dir"
+  run curl -fsSLo "$zip" "$url"
+  run unzip -o "$zip" -d "$dir"
+  if [ "$OS" = "linux" ]; then
+    run fc-cache -f "$dir"
+  fi
+  if [ "$DRY_RUN" -eq 0 ]; then
+    rm -rf "$_tmpdir"
+  fi
+  log "installed $FONT_NAME Nerd Font to $dir"
+}
+
 usage() {
   cat <<'EOF'
 Usage: bootstrap.sh [--dry-run] [-h|--help]

@@ -142,5 +142,33 @@ echo "$out" | grep -q 'ohmyzsh\|oh-my-zsh' && ok "third_party mentions oh-my-zsh
 echo "$out" | grep -q 'zinit' && ok "third_party mentions zinit" || notok "no zinit"
 export HOME="$OLDHOME"; rm -rf "$TMPHOME"; DRY_RUN=0; OS=""
 
+# --- install_font (dry-run, both OSes) ---
+DRY_RUN=1
+TMPHOME="$(mktemp -d)"; OLDHOME="$HOME"; export HOME="$TMPHOME"
+OS="linux"
+out="$(install_font 2>&1)"
+echo "$out" | grep -q "$TMPHOME/.local/share/fonts" \
+  && ok "install_font(linux) targets ~/.local/share/fonts" \
+  || notok "install_font(linux) wrong target"
+echo "$out" | grep -q "fc-cache" \
+  && ok "install_font(linux) refreshes font cache" \
+  || notok "install_font(linux) no fc-cache"
+OS="macos"
+out="$(install_font 2>&1)"
+echo "$out" | grep -q "$TMPHOME/Library/Fonts" \
+  && ok "install_font(macos) targets ~/Library/Fonts" \
+  || notok "install_font(macos) wrong target"
+echo "$out" | grep -q "fc-cache" \
+  && notok "install_font(macos) must NOT run fc-cache" \
+  || ok "install_font(macos) skips fc-cache (no fontconfig on macOS)"
+# idempotency: pretend already installed
+mkdir -p "$TMPHOME/Library/Fonts"
+touch "$TMPHOME/Library/Fonts/JetBrainsMonoNerdFont-Regular.ttf"
+out="$(install_font 2>&1)"
+echo "$out" | grep -qi "skip" \
+  && ok "install_font skips when already installed" \
+  || notok "install_font not idempotent"
+export HOME="$OLDHOME"; rm -rf "$TMPHOME"; DRY_RUN=0; OS=""
+
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
