@@ -40,6 +40,33 @@ detect_os() {
   esac
 }
 
+# backup_if_conflict PATH — if PATH is a real (non-symlink) file/dir,
+# move it aside to PATH.pre-stow.bak. Symlinks and missing paths: no-op.
+backup_if_conflict() {
+  local p="$1"
+  if [ -L "$p" ]; then return 0; fi
+  if [ -e "$p" ]; then
+    run mv "$p" "$p.pre-stow.bak"
+    log "backed up existing $p -> $p.pre-stow.bak"
+  fi
+  return 0
+}
+
+# stow_packages — back up conflicts, then (re)stow each package.
+stow_packages() {
+  have stow || die "stow not installed (install_pkgs should have handled this)"
+  local pkg f target
+  for pkg in $STOW_PACKAGES; do
+    # Every tracked file under pkg/ maps to $HOME/<relpath-after-pkg>
+    while IFS= read -r f; do
+      target="$HOME/${f#"$pkg"/}"
+      backup_if_conflict "$target"
+    done < <(cd "$REPO_DIR" && find "$pkg" -type f -not -path '*/.git/*')
+    run stow -d "$REPO_DIR" -t "$HOME" -R "$pkg"
+    log "stowed $pkg"
+  done
+}
+
 usage() {
   cat <<'EOF'
 Usage: bootstrap.sh [--dry-run] [-h|--help]
