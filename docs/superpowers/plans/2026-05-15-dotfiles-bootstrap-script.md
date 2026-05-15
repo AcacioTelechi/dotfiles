@@ -406,8 +406,11 @@ Add to `bootstrap.sh`:
 ensure_homebrew() {
   have brew && return 0
   log "installing Homebrew"
-  run /bin/bash -c \
-    "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  # The curl MUST stay inside the single-quoted sh -c string so it runs
+  # only when run() actually executes — otherwise $(...) would expand
+  # (and hit the network) even under --dry-run.
+  run sh -c \
+    '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
 }
 
 install_pkgs() {
