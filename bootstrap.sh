@@ -186,7 +186,7 @@ install_font() {
   run curl -fsSLo "$zip" "$url" || return 1
   run unzip -o "$zip" -d "$dir" || return 1
   if [ "$OS" = "linux" ]; then
-    run fc-cache -f "$dir"
+    run fc-cache -f "$dir" || return 1
   fi
   if [ "$DRY_RUN" -eq 0 ]; then
     rm -rf "$_tmpdir"
