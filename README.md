@@ -131,8 +131,11 @@ stow -nv -t ~ nvim          # dry-run: show what would happen
 oh-my-posh's theme uses Nerd Font glyphs. Without a Nerd Font you get tofu
 boxes (``).
 
-`bootstrap.sh` installs **JetBrainsMono Nerd Font**. Setting it as your
-terminal font is manual, emulator-specific, and often unnecessary. On
+`bootstrap.sh` installs **JetBrainsMono Nerd Font** (macOS: the
+`font-jetbrains-mono-nerd-font` Homebrew cask, brew-managed/upgradable;
+Linux: the pinned nerd-fonts release zip into `~/.local/share/fonts`).
+Setting it as your terminal font is manual, emulator-specific, and often
+unnecessary. On
 GNOME Terminal/VTE, selecting a patched Nerd Font *family* as the terminal
 font renders every character double-spaced (`t o t a l`). The working fix
 is to keep the profile font as plain `Monospace`: fontconfig automatically

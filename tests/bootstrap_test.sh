@@ -155,19 +155,20 @@ echo "$out" | grep -q "fc-cache" \
   || notok "install_font(linux) no fc-cache"
 OS="macos"
 out="$(install_font 2>&1)"
-echo "$out" | grep -q "$TMPHOME/Library/Fonts" \
-  && ok "install_font(macos) targets ~/Library/Fonts" \
-  || notok "install_font(macos) wrong target"
-echo "$out" | grep -q "fc-cache" \
-  && notok "install_font(macos) must NOT run fc-cache" \
-  || ok "install_font(macos) skips fc-cache (no fontconfig on macOS)"
-# idempotency: pretend already installed
-mkdir -p "$TMPHOME/Library/Fonts"
-touch "$TMPHOME/Library/Fonts/JetBrainsMonoNerdFont-Regular.ttf"
+echo "$out" | grep -q "DRY-RUN: brew install --cask font-jetbrains-mono-nerd-font" \
+  && ok "install_font(macos) uses the Homebrew nerd-font cask" \
+  || notok "install_font(macos) not using brew cask"
+echo "$out" | grep -qE "fc-cache|curl |unzip " \
+  && notok "install_font(macos) must NOT curl/unzip/fc-cache (cask only)" \
+  || ok "install_font(macos) cask path skips curl/unzip/fc-cache"
+# linux idempotency: pretend already installed
+OS="linux"
+mkdir -p "$TMPHOME/.local/share/fonts"
+touch "$TMPHOME/.local/share/fonts/JetBrainsMonoNerdFont-Regular.ttf"
 out="$(install_font 2>&1)"
 echo "$out" | grep -qi "skip" \
-  && ok "install_font skips when already installed" \
-  || notok "install_font not idempotent"
+  && ok "install_font(linux) skips when already installed" \
+  || notok "install_font(linux) not idempotent"
 export HOME="$OLDHOME"; rm -rf "$TMPHOME"; DRY_RUN=0; OS=""
 
 # --- bootstrap_tmux (dry-run) ---

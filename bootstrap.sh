@@ -6,6 +6,7 @@ REPO_URL="https://github.com/AcacioTelechi/dotfiles.git"
 REPO_DIR="$HOME/dotfiles"
 FONT_VERSION="v3.2.1"
 FONT_NAME="JetBrainsMono"
+FONT_CASK="font-jetbrains-mono-nerd-font"   # macOS: Homebrew cask name
 STOW_PACKAGES="nvim tmux zsh ohmyposh"
 CORE_PKGS="git stow zsh tmux neovim ripgrep fzf zoxide curl"
 
@@ -162,12 +163,16 @@ install_third_party() {
 }
 
 install_font() {
-  local dir zip url _tmpdir
   if [ "$OS" = "macos" ]; then
-    dir="$HOME/Library/Fonts"
-  else
-    dir="$HOME/.local/share/fonts"
+    # Homebrew cask: brew-managed + upgradable, and idempotent (brew
+    # exits 0 / no-ops if the cask is already installed).
+    run brew install --cask "$FONT_CASK" || return 1
+    log "installed $FONT_NAME Nerd Font (brew cask $FONT_CASK)"
+    return 0
   fi
+  # Linux: drop the release zip into the user font dir + refresh cache.
+  local dir zip url _tmpdir
+  dir="$HOME/.local/share/fonts"
   # shellcheck disable=SC2012  # glob existence check, not parsing ls
   if ls "$dir"/JetBrainsMono*NerdFont*.ttf >/dev/null 2>&1; then
     log "JetBrainsMono Nerd Font already installed in $dir, skipping"
@@ -185,9 +190,7 @@ install_font() {
   run mkdir -p "$dir"
   run curl -fsSLo "$zip" "$url" || return 1
   run unzip -o "$zip" -d "$dir" || return 1
-  if [ "$OS" = "linux" ]; then
-    run fc-cache -f "$dir" || return 1
-  fi
+  run fc-cache -f "$dir" || return 1
   if [ "$DRY_RUN" -eq 0 ]; then
     rm -rf "$_tmpdir"
   fi
