@@ -7,7 +7,7 @@ REPO_DIR="$HOME/dotfiles"
 FONT_VERSION="v3.2.1"
 FONT_NAME="JetBrainsMono"
 STOW_PACKAGES="nvim tmux zsh"
-CORE_PKGS="git stow zsh tmux neovim ripgrep zoxide curl"
+CORE_PKGS="git stow zsh tmux neovim ripgrep fzf zoxide curl"
 
 DRY_RUN=0
 SHOW_HELP=0
