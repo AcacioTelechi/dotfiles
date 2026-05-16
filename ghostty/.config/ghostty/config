@@ -1,0 +1,19 @@
+# Ghostty config — stowed to ~/.config/ghostty/config
+#
+# Why this exists: macOS Terminal.app lacks fontconfig glyph fallback AND
+# 24-bit truecolor, so it showed tofu + a monochrome tmux/Catppuccin bar.
+# Ghostty is a truecolor terminal and reads this file, so a fresh machine
+# gets correct glyphs + colors with no manual GUI fiddling.
+
+# Nerd Font installed by bootstrap.sh (brew cask on macOS). The `Mono`
+# variant keeps strict monospacing for the prompt + tmux status bar; if
+# powerline separators look clipped, drop ` Mono`.
+font-family = JetBrainsMono Nerd Font Mono
+# font-size = 13
+
+# Ghostty is 24-bit truecolor by default and exports
+# COLORTERM=truecolor, so the existing tmux.conf renders Catppuccin
+# correctly with no extra settings.
+
+# Optional: match the terminal chrome to the tmux theme.
+# theme = catppuccin-mocha

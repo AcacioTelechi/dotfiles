@@ -9,7 +9,8 @@ dotfiles/
 ├── nvim/.config/nvim/{init.lua,lazy-lock.json}   → ~/.config/nvim/
 ├── tmux/.config/tmux/tmux.conf                    → ~/.config/tmux/
 ├── zsh/{.zshrc,.zprofile}                         → ~/.zshrc, ~/.zprofile
-└── ohmyposh/.config/ohmyposh/base.toml           → ~/.config/ohmyposh/
+├── ohmyposh/.config/ohmyposh/base.toml           → ~/.config/ohmyposh/
+└── ghostty/.config/ghostty/config                → ~/.config/ghostty/
 ```
 
 ## Prerequisites
@@ -128,6 +129,15 @@ stow -nv -t ~ nvim          # dry-run: show what would happen
   `--config ~/.config/ohmyposh/base.toml`; that file is tracked here so a
   fresh machine gets the real prompt (without it oh-my-posh prints
   `CONFIG NOT FOUND` and the prompt renders as tofu).
+
+### ghostty
+- Terminal emulator config (`~/.config/ghostty/config`). Sets
+  `font-family = JetBrainsMono Nerd Font Mono`. Ghostty is a truecolor
+  terminal and reads this file, so a fresh machine gets correct glyphs +
+  Catppuccin colors with no manual terminal-app fiddling — unlike Apple's
+  Terminal.app (no fontconfig fallback, no 24-bit color; see
+  [Fonts](#fonts) and Troubleshooting). Other terminals (iTerm2, etc.)
+  remain a manual font-set; this package only automates Ghostty.
 
 ## Fonts
 
