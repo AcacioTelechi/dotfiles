@@ -99,8 +99,25 @@ source $ZSH/oh-my-zsh.sh
 # - $ZSH_CUSTOM/macos.zsh
 # For a full list of active aliases, run `alias`.
 #
-source /usr/share/doc/fzf/examples/key-bindings.zsh
-source /usr/share/doc/fzf/examples/completion.zsh
+# fzf key-bindings + completion. The path differs by platform (apt:
+# /usr/share/doc/fzf/examples, brew: $(brew --prefix)/opt/fzf/shell) and
+# older fzf lacks `fzf --zsh`, so prefer the modern one-shot, else source
+# whichever files exist. Guarded on `fzf` so a missing binary never
+# breaks shell startup.
+if command -v fzf >/dev/null 2>&1; then
+  if fzf --zsh >/dev/null 2>&1; then
+    source <(fzf --zsh)
+  else
+    for _fzf in \
+      /usr/share/doc/fzf/examples/key-bindings.zsh \
+      /usr/share/doc/fzf/examples/completion.zsh \
+      "${HOMEBREW_PREFIX:-$(brew --prefix 2>/dev/null)}/opt/fzf/shell/key-bindings.zsh" \
+      "${HOMEBREW_PREFIX:-$(brew --prefix 2>/dev/null)}/opt/fzf/shell/completion.zsh"; do
+      [ -r "$_fzf" ] && source "$_fzf"
+    done
+    unset _fzf
+  fi
+fi
 
 
 # Set the directory we want to store zinint and plugins

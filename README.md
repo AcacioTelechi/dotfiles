@@ -8,7 +8,8 @@ the path relative to `$HOME`.
 dotfiles/
 ├── nvim/.config/nvim/{init.lua,lazy-lock.json}   → ~/.config/nvim/
 ├── tmux/.config/tmux/tmux.conf                    → ~/.config/tmux/
-└── zsh/{.zshrc,.zprofile}                         → ~/.zshrc, ~/.zprofile
+├── zsh/{.zshrc,.zprofile}                         → ~/.zshrc, ~/.zprofile
+└── ohmyposh/.config/ohmyposh/base.toml           → ~/.config/ohmyposh/
 ```
 
 ## Prerequisites
@@ -114,6 +115,16 @@ stow -nv -t ~ nvim          # dry-run: show what would happen
   (`maximum nested function level reached`). The guard makes re-sourcing a
   no-op. **To test changes, open a new shell (`exec zsh`), don't
   `source ~/.zshrc`.**
+- **fzf** key-bindings/completion are sourced portably: `fzf --zsh` when
+  available (fzf ≥ 0.48), else the apt (`/usr/share/doc/fzf/examples`) or
+  Homebrew (`$(brew --prefix)/opt/fzf/shell`) paths — all guarded by
+  `command -v fzf` so a missing binary never breaks startup.
+
+### ohmyposh
+- `oh-my-posh` prompt theme. `.zshrc` initialises it with
+  `--config ~/.config/ohmyposh/base.toml`; that file is tracked here so a
+  fresh machine gets the real prompt (without it oh-my-posh prints
+  `CONFIG NOT FOUND` and the prompt renders as tofu).
 
 ## Fonts
 

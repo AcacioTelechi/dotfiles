@@ -6,7 +6,7 @@ REPO_URL="https://github.com/AcacioTelechi/dotfiles.git"
 REPO_DIR="$HOME/dotfiles"
 FONT_VERSION="v3.2.1"
 FONT_NAME="JetBrainsMono"
-STOW_PACKAGES="nvim tmux zsh"
+STOW_PACKAGES="nvim tmux zsh ohmyposh"
 CORE_PKGS="git stow zsh tmux neovim ripgrep fzf zoxide curl"
 
 DRY_RUN=0
