@@ -79,7 +79,10 @@ stow -nv -t ~ nvim          # dry-run: show what would happen
 
 ### tmux
 - Prefix remapped `C-b` → `C-a`.
-- True-color (`RGB`) so oh-my-posh / nvim colors render inside tmux.
+- True-color (`RGB`) so oh-my-posh / nvim / Catppuccin colors render
+  inside tmux — **requires a truecolor terminal**; Apple's Terminal.app
+  is 256-color only and shows the status bar monochrome (see
+  Troubleshooting).
 - `escape-time 10` and `focus-events on` for a lag-free Neovim experience.
 - Mouse on, vi copy-mode, 1-based indexing, 50k scrollback.
 - Reload without restarting: `prefix` then `r`.
@@ -164,6 +167,7 @@ Either way, terminal font changes apply to **new terminal windows** only.
 | Tofu boxes `` in prompt **or tmux status bar** | No Nerd Font (or terminal not set to use it) — see [Fonts](#fonts). |
 | `_omp_call_widget: maximum nested function level reached` | You re-`source`d `.zshrc`. Open a new shell (`exec zsh`); the `_OMP_INITIALIZED` guard prevents recurrence. |
 | Every character double-spaced (`t o t a l`) | Patched Nerd Font *families* set as the terminal font cause this on GNOME Terminal/VTE. Working fix: keep the terminal profile font as plain `Monospace`; fontconfig falls back to the installed Nerd Font for glyphs automatically. |
+| tmux status bar / prompt has **no colors** (monochrome) on macOS | Apple's **Terminal.app has no 24-bit truecolor** support, which Catppuccin needs — it silently drops the RGB escapes. Use a truecolor terminal (iTerm2 / Ghostty / WezTerm / kitty / Alacritty); they also set `COLORTERM=truecolor` so the existing `tmux.conf` just works. Terminal.app's gap is permanent. |
 | `stow` creates `~/config` instead of `~/.config/nvim` | Package structure too shallow. A file at `~/.config/nvim/init.lua` must live at `dotfiles/nvim/.config/nvim/init.lua`. |
 
 ## Conventions
