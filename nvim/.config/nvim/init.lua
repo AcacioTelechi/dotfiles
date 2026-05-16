@@ -302,6 +302,19 @@ local plugins = {
 		end,
 	},
 
+	-- File tree: toggleable sidebar explorer
+	{
+		'nvim-tree/nvim-tree.lua',
+		dependencies = { 'nvim-tree/nvim-web-devicons' },
+		-- lazy-loaded: only loads on first use of the toggle key
+		keys = {
+			{ '<leader>e', '<cmd>NvimTreeToggle<cr>', desc = 'Toggle file tree' },
+		},
+		config = function()
+			require('nvim-tree').setup()
+		end,
+	},
+
 	-- LSP: mason installs servers, lspconfig wires them up
 	{
 		'neovim/nvim-lspconfig',
