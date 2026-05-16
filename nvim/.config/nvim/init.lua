@@ -138,7 +138,7 @@ local plugins = {
 		config = function()
 			require('lualine').setup({
 				options = {
-					theme = 'catppuccin',
+					theme = 'auto', -- auto-detects the active catppuccin colorscheme
 					icons_enabled = true,
 					globalstatus = true,
 					section_separators = { left = '', right = '' },
