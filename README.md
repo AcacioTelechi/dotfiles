@@ -134,17 +134,24 @@ boxes (``).
 `bootstrap.sh` installs **JetBrainsMono Nerd Font** (macOS: the
 `font-jetbrains-mono-nerd-font` Homebrew cask, brew-managed/upgradable;
 Linux: the pinned nerd-fonts release zip into `~/.local/share/fonts`).
-Setting it as your terminal font is manual, emulator-specific, and often
-unnecessary. On
-GNOME Terminal/VTE, selecting a patched Nerd Font *family* as the terminal
-font renders every character double-spaced (`t o t a l`). The working fix
-is to keep the profile font as plain `Monospace`: fontconfig automatically
-falls back to the installed Nerd Font for the individual glyphs the prompt
-and tmux status bar need, without affecting ordinary text spacing. See the
-Troubleshooting row "Every character double-spaced (`t o t a l`)".
+**Pointing your terminal at it is a manual, per-OS step the script does
+not do** — and the correct approach differs by platform:
 
-If you do change your terminal font manually, the change applies to
-**new terminal windows** only.
+**macOS (Terminal.app / iTerm2):** set the terminal's font directly to
+**JetBrainsMono Nerd Font Mono** (Terminal.app → Settings → Profiles →
+Text → Font → Change…). macOS has no fontconfig glyph-fallback, so a plain
+`Monospace` font stays tofu — the terminal font itself must be the Nerd
+Font. macOS terminals do **not** have the VTE double-spacing bug, so this
+is safe and is the recommended setup. If powerline separators look clipped
+with the `Mono` variant, use plain **JetBrainsMono Nerd Font**.
+
+**Linux (GNOME Terminal / VTE):** do the opposite — keep the profile font
+as plain `Monospace` and let **fontconfig** fall back to the installed
+Nerd Font for glyphs. Selecting a patched Nerd Font *family* as the VTE
+terminal font triggers a bug that renders every character double-spaced
+(`t o t a l`); see the Troubleshooting row of the same name.
+
+Either way, terminal font changes apply to **new terminal windows** only.
 
 ## Troubleshooting
 
