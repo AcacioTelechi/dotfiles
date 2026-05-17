@@ -53,7 +53,7 @@ return {
         conceallevel = 2,
         timeoutlen = 500,
         undofile = true,
-        undodir = vim.fn.expand("~/.vim/undodir"),
+        undodir = vim.fn.expand "~/.vim/undodir",
       },
       g = { -- vim.g.<key>
         -- configure global vim variables (vim.g)
