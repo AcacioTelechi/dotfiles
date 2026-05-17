@@ -1,34 +1,14 @@
-# AstroNvim Template
+# Neovim — AstroNvim v6
 
-**NOTE:** This is for AstroNvim v6+
+This is an [AstroNvim](https://astronvim.com) v6 configuration, managed as a
+GNU stow package in this dotfiles repo (`~/.config/nvim` symlinks here).
 
-A template for getting started with [AstroNvim](https://github.com/AstroNvim/AstroNvim)
+Customizations live in the template override files:
 
-## 🛠️ Installation
+- `lua/community.lua` — catppuccin colorscheme + Lua/Python/TS/JSON language packs
+- `lua/plugins/astroui.lua` — colorscheme selection
+- `lua/plugins/astrocore.lua` — personal vim options and keymaps
+- `lua/polish.lua` — `~/.vim/undodir` creation
+- `lua/plugins/user.lua` — extra plugins (vim-tmux-navigator)
 
-#### Make a backup of your current nvim and shared folder
-
-```shell
-mv ~/.config/nvim ~/.config/nvim.bak
-mv ~/.local/share/nvim ~/.local/share/nvim.bak
-mv ~/.local/state/nvim ~/.local/state/nvim.bak
-mv ~/.cache/nvim ~/.cache/nvim.bak
-```
-
-#### Create a new user repository from this template
-
-Press the "Use this template" button above to create a new repository to store your user configuration.
-
-You can also just clone this repository directly if you do not want to track your user configuration in GitHub.
-
-#### Clone the repository
-
-```shell
-git clone https://github.com/<your_user>/<your_repository> ~/.config/nvim
-```
-
-#### Start Neovim
-
-```shell
-nvim
-```
+Migration design/plan: `docs/superpowers/specs/` and `docs/superpowers/plans/`.
