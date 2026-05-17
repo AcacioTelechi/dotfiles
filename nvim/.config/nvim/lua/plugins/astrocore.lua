@@ -1,5 +1,3 @@
-if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
-
 -- AstroCore provides a central place to modify mappings, vim options, autocommands, and more!
 -- Configuration documentation can be found with `:h astrocore`
 -- NOTE: We highly recommend setting up the Lua Language Server (`:LspInstall lua_ls`)
@@ -45,6 +43,17 @@ return {
         spell = false, -- sets vim.opt.spell
         signcolumn = "yes", -- sets vim.opt.signcolumn to yes
         wrap = false, -- sets vim.opt.wrap
+        colorcolumn = "100",
+        scrolloff = 10,
+        sidescrolloff = 10,
+        tabstop = 2,
+        shiftwidth = 2,
+        softtabstop = 2,
+        expandtab = true,
+        conceallevel = 2,
+        timeoutlen = 500,
+        undofile = true,
+        undodir = vim.fn.expand("~/.vim/undodir"),
       },
       g = { -- vim.g.<key>
         -- configure global vim variables (vim.g)
@@ -79,6 +88,26 @@ return {
 
         -- setting a mapping to false will disable it
         -- ["<C-S>"] = false,
+
+        -- move lines
+        ["<A-j>"] = { ":m .+1<CR>==", desc = "Move line down" },
+        ["<A-k>"] = { ":m .-2<CR>==", desc = "Move line up" },
+        ["<A-h>"] = { "<<", desc = "Indent left" },
+        ["<A-l>"] = { ">>", desc = "Indent right" },
+        ["<S-A-j>"] = { ":t.<CR>", desc = "Duplicate line down" },
+        ["<S-A-k>"] = { ":t.-1<CR>", desc = "Duplicate line up" },
+        ["<F12>"] = { function() vim.lsp.buf.definition() end, desc = "Goto definition" },
+        ["<S-F12>"] = { function() vim.lsp.buf.references() end, desc = "Find references" },
+      },
+      v = {
+        ["<A-j>"] = { ":m '>+1<CR>gv=gv", desc = "Move selection down" },
+        ["<A-k>"] = { ":m '<-2<CR>gv=gv", desc = "Move selection up" },
+        ["<A-h>"] = { "<gv", desc = "Indent left and reselect" },
+        ["<A-l>"] = { ">gv", desc = "Indent right and reselect" },
+        ["<S-A-j>"] = { ":t '><CR>gv=gv", desc = "Duplicate selection down" },
+        ["<S-A-k>"] = { ":t '<-1<CR>gv=gv", desc = "Duplicate selection up" },
+        ["<"] = { "<gv", desc = "Indent left and reselect" },
+        [">"] = { ">gv", desc = "Indent right and reselect" },
       },
     },
   },
