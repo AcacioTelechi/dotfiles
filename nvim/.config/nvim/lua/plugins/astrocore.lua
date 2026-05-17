@@ -89,7 +89,7 @@ return {
         -- setting a mapping to false will disable it
         -- ["<C-S>"] = false,
 
-        -- move lines
+        -- personal: line move / indent / duplicate / LSP
         ["<A-j>"] = { ":m .+1<CR>==", desc = "Move line down" },
         ["<A-k>"] = { ":m .-2<CR>==", desc = "Move line up" },
         ["<A-h>"] = { "<<", desc = "Indent left" },
@@ -100,6 +100,7 @@ return {
         ["<S-F12>"] = { function() vim.lsp.buf.references() end, desc = "Find references" },
       },
       v = {
+        -- personal: keep selection after move / indent / duplicate
         ["<A-j>"] = { ":m '>+1<CR>gv=gv", desc = "Move selection down" },
         ["<A-k>"] = { ":m '<-2<CR>gv=gv", desc = "Move selection up" },
         ["<A-h>"] = { "<gv", desc = "Indent left and reselect" },
