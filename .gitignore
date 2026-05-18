@@ -15,3 +15,6 @@
 
 # tmux plugins (managed by tpm, not committed)
 tmux/.config/tmux/plugins/
+
+# Lock files
+*.lock
