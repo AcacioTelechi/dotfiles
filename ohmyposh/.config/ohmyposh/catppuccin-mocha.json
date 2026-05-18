@@ -54,6 +54,18 @@
           "template": "{{ .HEAD }} ",
           "style": "plain",
           "type": "git"
+        },
+        {
+          "type": "python",
+          "style": "powerline",
+          "powerline_symbol": "\uE0B0",
+          "foreground": "p:yellow",
+          "background": "transparent",
+          "template": " \uE235 {{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}",
+          "options": {
+            "fetch_virtual_env": true,
+            "display_mode": "always"
+          }
         }
       ]
     },
