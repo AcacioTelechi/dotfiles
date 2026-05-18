@@ -13,7 +13,7 @@ console_title_template = '{{ .Shell }} in {{ .Folder }}'
     type = 'path'
     style = 'plain'
     background = 'transparent'
-    foreground = 'blue'
+    foreground = '#89b4fa'
     template = '{{ .Path }}'
 
     [blocks.segments.properties]
@@ -30,6 +30,17 @@ console_title_template = '{{ .Shell }} in {{ .Folder }}'
       branch_icon = ''
       commit_icon = '@'
       fetch_status = true
+
+  [[blocks.segments]]
+    type = 'python'
+    style = 'plain'
+    foreground = 'yellow'
+    background = 'transparent'
+    template = '{{ if .Venv }}  {{ .Venv }}{{ end }}'
+
+    [blocks.segments.properties]
+      display_mode = 'environment'
+      fetch_virtual_env = true
 
 [[blocks]]
   type = 'rprompt'
@@ -54,8 +65,8 @@ console_title_template = '{{ .Shell }} in {{ .Folder }}'
     type = 'text'
     style = 'plain'
     foreground_templates = [
-      "{{if gt .Code 0}}red{{end}}",
-      "{{if eq .Code 0}}magenta{{end}}",
+      "{{if gt .Code 0}}#f38ba8{{end}}",
+      "{{if eq .Code 0}}#cba6f7{{end}}",
     ]
     background = 'transparent'
     template = '❯'
@@ -69,6 +80,6 @@ console_title_template = '{{ .Shell }} in {{ .Folder }}'
   template = '❯ '
 
 [secondary_prompt]
-  foreground = 'magenta'
+  foreground = '#cba6f7'
   background = 'transparent'
   template = '❯❯ '

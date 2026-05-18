@@ -142,7 +142,7 @@ autoload -U compinit && compinit
 # shell. Re-running the init re-wraps ZLE widgets, stacking _omp_call_widget
 # wrappers until FUNCNEST is exceeded ("maximum nested function level reached").
 if [[ -z "$_OMP_INITIALIZED" ]]; then
-  eval "$(oh-my-posh init zsh --config $HOME/.config/ohmyposh/base.toml)"
+  eval "$(oh-my-posh init zsh --config $HOME/.config/ohmyposh/catppuccin-mocha.json)"
   _OMP_INITIALIZED=1
 fi
 
