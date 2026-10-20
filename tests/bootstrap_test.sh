@@ -147,6 +147,21 @@ echo "$out" | grep -qF 'DRY-RUN: sh -c /bin/bash -c "$(curl -fsSL https://raw.gi
   || notok "install_pkgs(macos) may have expanded \$(curl) under dry-run"
 DRY_RUN=0
 
+# --- set_login_shell (dry-run) ---
+DRY_RUN=1
+OS="linux"
+login_shell() { echo /usr/bin/zsh; }
+out="$(set_login_shell 2>&1)"
+echo "$out" | grep -q 'chsh' \
+  && notok "set_login_shell should skip chsh when already zsh" \
+  || ok "set_login_shell skips chsh when already zsh"
+login_shell() { echo /bin/bash; }
+out="$(set_login_shell 2>&1)"
+echo "$out" | grep -q "DRY-RUN: chsh -s $(command -v zsh)" \
+  && ok "set_login_shell runs chsh when login shell is bash" \
+  || notok "set_login_shell did not chsh from bash"
+DRY_RUN=0
+
 # --- install_third_party (dry-run, all guarded by have/path) ---
 DRY_RUN=1
 OS="linux"

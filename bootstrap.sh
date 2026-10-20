@@ -238,6 +238,37 @@ bootstrap_tmux() {
   run "$tpm/bin/install_plugins"
 }
 
+# login_shell — the current user's login shell from the user database
+# (not $SHELL, which is whatever started this script).
+login_shell() {
+  if [ "$OS" = "macos" ]; then
+    dscl . -read "/Users/$(id -un)" UserShell | awk '{print $2}'
+  else
+    getent passwd "$(id -un)" | cut -d: -f7
+  fi
+}
+
+# set_login_shell — make zsh the login shell. Without this, new terminals
+# and SSH sessions start bash and ~/.zshrc never runs. chsh asks for your
+# password, so it only succeeds from an interactive terminal.
+set_login_shell() {
+  local zsh_path
+  zsh_path="$(command -v zsh)" || return 1
+  if [ "$(basename "$(login_shell)")" = "zsh" ]; then
+    log "login shell is already zsh, skipping"
+    return 0
+  fi
+  grep -qx "$zsh_path" /etc/shells || {
+    warn "$zsh_path is not in /etc/shells; add it, then: chsh -s $zsh_path"
+    return 1
+  }
+  log "changing login shell to $zsh_path (chsh will ask for your password)"
+  run chsh -s "$zsh_path" || {
+    warn "chsh failed; run it yourself: chsh -s $zsh_path"
+    return 1
+  }
+}
+
 print_summary() {
   cat <<'EOF'
 
@@ -249,7 +280,8 @@ Next steps (manual, intentionally not automated):
     terminal emulator, OR keep a plain Monospace font and rely on
     fontconfig fallback for glyphs. Do NOT set a Nerd Font as the
     primary font if you hit double-spaced text (see README Fonts).
-  • Start a fresh shell:  exec zsh
+  • Log out and back in (or open a new terminal) to get zsh as your
+    login shell; for this terminal only:  exec zsh
   • Inside tmux, plugins are already installed; reload with: prefix + r
 ────────────────────────────────────────────────────────────
 EOF
@@ -336,6 +368,7 @@ main() {
   stow_packages
   install_font   || warn "font step failed (non-fatal); see README Fonts"
   bootstrap_tmux || warn "tmux plugin step failed (non-fatal)"
+  set_login_shell || warn "login shell not changed (non-fatal)"
   print_summary
   log "bootstrap done"
 }
