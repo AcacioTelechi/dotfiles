@@ -7,7 +7,7 @@ REPO_DIR="$HOME/dotfiles"
 FONT_VERSION="v3.2.1"
 FONT_NAME="JetBrainsMono"
 FONT_CASK="font-jetbrains-mono-nerd-font"   # macOS: Homebrew cask name
-STOW_PACKAGES="nvim tmux zsh ohmyposh ghostty"
+STOW_PACKAGES="nvim tmux zsh ohmyposh ghostty bin"
 CORE_PKGS="git stow zsh tmux neovim ripgrep fzf zoxide curl"
 
 DRY_RUN=0
@@ -73,6 +73,9 @@ stow_packages() {
   have stow || die "stow not installed (install_pkgs should have handled this)"
   [ -d "$REPO_DIR" ] || die "REPO_DIR not found: $REPO_DIR"
   local pkg line rel
+  # Pre-create ~/.local/bin: otherwise stow tree-folds the `bin` package
+  # and turns ~/.local itself into a symlink into this repo.
+  run mkdir -p "$HOME/.local/bin"
   for pkg in $STOW_PACKAGES; do
     # `stow -n -R` (simulate) writes conflict lines to stderr (hence 2>&1);
     # a process substitution's exit status is not checked by set -e, so no

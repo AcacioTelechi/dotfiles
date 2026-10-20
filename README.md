@@ -10,7 +10,8 @@ dotfiles/
 ├── tmux/.config/tmux/tmux.conf                    → ~/.config/tmux/
 ├── zsh/{.zshrc,.zprofile}                         → ~/.zshrc, ~/.zprofile
 ├── ohmyposh/.config/ohmyposh/base.toml           → ~/.config/ohmyposh/
-└── ghostty/.config/ghostty/config                → ~/.config/ghostty/
+├── ghostty/.config/ghostty/config                → ~/.config/ghostty/
+└── bin/.local/bin/wake_claude                     → ~/.local/bin/
 ```
 
 ## Prerequisites
@@ -138,6 +139,27 @@ stow -nv -t ~ nvim          # dry-run: show what would happen
   Terminal.app (no fontconfig fallback, no 24-bit color; see
   [Fonts](#fonts) and Troubleshooting). Other terminals (iTerm2, etc.)
   remain a manual font-set; this package only automates Ghostty.
+
+### bin
+- `wake_claude` — keeps a [Claude Code Remote Control](https://code.claude.com/docs/en/remote-control)
+  server always on (Linux/systemd only). It writes a `systemd --user`
+  unit, `claude-rc-<name>.service`, that runs `claude remote-control`
+  inside a detached tmux session (your tmux.conf, its own socket
+  `-L claude-rc-<name>`). It also enables linger, so the daemon survives
+  logout and starts at boot. If claude exits, systemd restarts it.
+  ```sh
+  cd ~/src/app && claude          # one-time: accept the folder-trust prompt
+  wake_claude                     # serve $PWD (name = dir basename)
+  wake_claude up -d ~/src/app -- --spawn worktree --permission-mode acceptEdits
+  wake_claude attach -n app       # peek at the TUI (prefix + d to detach)
+  wake_claude status|logs|restart|down -n app
+  wake_claude list
+  ```
+  Re-running `up` rewrites the unit, so that's also how you change args.
+  The daemon's tmux server sets `WAKE_CLAUDE=1`, and `tmux.conf` uses it
+  to turn off tmux-continuum there. Otherwise the daemon would restore
+  your saved sessions into itself and overwrite the save file with its
+  own single session.
 
 ## Fonts
 
