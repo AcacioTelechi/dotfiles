@@ -72,6 +72,25 @@ ZSH_THEME="robbyrussell"
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(git)
 
+# Set the directory we want to store zinint and plugins
+ZINIT_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/zinit/zinit.git"
+# Download Zinit, if it's not there yet
+if [[ ! -d $ZINIT_HOME ]]; then
+  mkdir -p "$(dirname "$ZINIT_HOME")"
+  git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+fi
+# Source Zinit
+source "$ZINIT_HOME/zinit.zsh"
+
+# Add plugins — deferred (`wait lucid`) so the prompt paints first and
+# plugins attach a few ms later: noticeably faster shell startup.
+zinit ice wait lucid depth=1; zinit light zsh-users/zsh-syntax-highlighting
+zinit ice wait lucid depth=1 atload'_zsh_autosuggest_start'; zinit light zsh-users/zsh-autosuggestions
+zinit ice wait lucid depth=1 blockf; zinit light zsh-users/zsh-completions
+# No compinit here: zinit is sourced before oh-my-zsh, so its completions
+# dir is already on $fpath when oh-my-zsh runs compinit (with a cached
+# dump). A second compinit after that rebuilt ~/.zcompdump on every start.
+
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
@@ -120,24 +139,6 @@ if command -v fzf >/dev/null 2>&1; then
 fi
 
 
-# Set the directory we want to store zinint and plugins
-ZINIT_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/zinit/zinit.git"
-# Download Zinit, if it's not there yet
-if [[ ! -d $ZINIT_HOME ]]; then
-  mkdir -p "$(dirname "$ZINIT_HOME")"
-  git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
-fi
-# Source Zinit
-source "$ZINIT_HOME/zinit.zsh"
-
-# Add plugins — deferred (`wait lucid`) so the prompt paints first and
-# plugins attach a few ms later: noticeably faster shell startup.
-zinit ice wait lucid depth=1; zinit light zsh-users/zsh-syntax-highlighting
-zinit ice wait lucid depth=1 atload'_zsh_autosuggest_start'; zinit light zsh-users/zsh-autosuggestions
-zinit ice wait lucid depth=1 blockf; zinit light zsh-users/zsh-completions
-# Load completions
-autoload -U compinit && compinit
-
 # Oh my posh — guard against re-init when .zshrc is re-sourced in the same
 # shell. Re-running the init re-wraps ZLE widgets, stacking _omp_call_widget
 # wrappers until FUNCNEST is exceeded ("maximum nested function level reached").
@@ -159,9 +160,21 @@ export PATH="$PATH:/home/acacio/.local/bin"
 
 export PATH="$PATH:/opt/nvim-linux-x86_64/bin" # NeoVim
 
+# nvm — lazy. Sourcing nvm.sh resolves the default version on every shell
+# (~10s on srv1). Instead put the newest installed node on PATH directly
+# (node/npm/pyright work immediately) and load nvm on first `nvm` call.
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  _node_bins=("$NVM_DIR"/versions/node/*/bin(N-/nOn))
+  (( $#_node_bins )) && export PATH="$_node_bins[1]:$PATH"
+  unset _node_bins
+  nvm() {
+    unfunction nvm
+    \. "$NVM_DIR/nvm.sh"
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+    nvm "$@"
+  }
+fi
 
 
 [[ -e "/home/acacio/lib/oracle-cli/lib/python3.12/site-packages/oci_cli/bin/oci_autocomplete.sh" ]] && source "/home/acacio/lib/oracle-cli/lib/python3.12/site-packages/oci_cli/bin/oci_autocomplete.sh"
