@@ -9,6 +9,7 @@ FONT_NAME="JetBrainsMono"
 FONT_CASK="font-jetbrains-mono-nerd-font"   # macOS: Homebrew cask name
 STOW_PACKAGES="nvim tmux zsh ohmyposh ghostty bin"
 CORE_PKGS="git stow zsh tmux neovim ripgrep fzf zoxide curl"
+LINUX_PKGS="unzip fontconfig"   # Linux font install: unzip + fc-cache
 
 DRY_RUN=0
 SHOW_HELP=0
@@ -125,8 +126,9 @@ pkg_installed() {
 # machine this is a no-op, so a re-run needs no sudo password (and works
 # from non-interactive shells where sudo can't prompt).
 install_pkgs() {
-  local p missing=""
-  for p in $CORE_PKGS; do
+  local p want="$CORE_PKGS" missing=""
+  [ "$OS" = "linux" ] && want="$want $LINUX_PKGS"
+  for p in $want; do
     pkg_installed "$p" || missing="$missing $p"
   done
   missing="${missing# }"
@@ -215,12 +217,14 @@ install_font() {
   fi
   zip="$_tmpdir/$FONT_NAME.zip"
   run mkdir -p "$dir"
-  run curl -fsSLo "$zip" "$url" || return 1
-  run unzip -o "$zip" -d "$dir" || return 1
-  run fc-cache -f "$dir" || return 1
-  if [ "$DRY_RUN" -eq 0 ]; then
-    rm -rf "$_tmpdir"
+  # Only the .ttf files: the zip also ships OFL.txt and README.md.
+  if ! { run curl -fsSLo "$zip" "$url" \
+         && run unzip -o -q "$zip" '*.ttf' -d "$dir" \
+         && run fc-cache -f "$dir"; }; then
+    [ "$DRY_RUN" -eq 0 ] && rm -rf "$_tmpdir"
+    return 1
   fi
+  [ "$DRY_RUN" -eq 0 ] && rm -rf "$_tmpdir"
   log "installed $FONT_NAME Nerd Font to $dir"
 }
 

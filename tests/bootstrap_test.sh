@@ -134,6 +134,9 @@ echo "$out" | grep -q 'DRY-RUN: sudo apt-get update' \
 echo "$out" | grep -q 'DRY-RUN: sudo DEBIAN_FRONTEND=noninteractive apt-get install -y git stow zsh tmux neovim ripgrep fzf zoxide curl' \
   && ok "install_pkgs(linux) installs CORE_PKGS" \
   || notok "install_pkgs(linux) missing CORE_PKGS install"
+echo "$out" | grep -q 'apt-get install -y .* unzip fontconfig$' \
+  && ok "install_pkgs(linux) adds font deps (unzip, fontconfig)" \
+  || notok "install_pkgs(linux) missing font deps"
 OS="macos"; PKG="brew"
 out="$(install_pkgs 2>&1)"
 echo "$out" | grep -q 'DRY-RUN: brew install git stow zsh tmux neovim ripgrep fzf zoxide curl' \
