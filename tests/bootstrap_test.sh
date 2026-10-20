@@ -113,6 +113,20 @@ rm -rf "$SB" "$RB" "$BIN"
 # --- install_pkgs (dry-run) ---
 DRY_RUN=1
 OS="linux"; PKG="apt-get"
+# All present -> no apt-get (and so no sudo prompt).
+pkg_installed() { return 0; }
+out="$(install_pkgs 2>&1)"
+echo "$out" | grep -q 'apt-get' \
+  && notok "install_pkgs should skip apt-get when all packages present" \
+  || ok "install_pkgs skips apt-get when all packages present"
+# Only some missing -> install just those.
+pkg_installed() { case "$1" in fzf|zoxide) return 1 ;; *) return 0 ;; esac; }
+out="$(install_pkgs 2>&1)"
+echo "$out" | grep -q 'DRY-RUN: sudo DEBIAN_FRONTEND=noninteractive apt-get install -y fzf zoxide$' \
+  && ok "install_pkgs installs only missing packages" \
+  || notok "install_pkgs did not limit install to missing packages"
+# None present -> full CORE_PKGS install.
+pkg_installed() { return 1; }
 out="$(install_pkgs 2>&1)"
 echo "$out" | grep -q 'DRY-RUN: sudo apt-get update' \
   && ok "install_pkgs(linux) runs apt-get update" \

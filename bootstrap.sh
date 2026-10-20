@@ -12,6 +12,7 @@ CORE_PKGS="git stow zsh tmux neovim ripgrep fzf zoxide curl"
 
 DRY_RUN=0
 SHOW_HELP=0
+RUN_CMD=""
 
 # ---- Output helpers -------------------------------------------------------
 log()  { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
@@ -24,6 +25,7 @@ run() {
     printf 'DRY-RUN: %s\n' "$*"
     return 0
   fi
+  RUN_CMD="$*"   # for on_err: $BASH_COMMAND here would just be '"$@"'
   "$@"
 }
 
@@ -110,15 +112,37 @@ ensure_homebrew() {
     '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
 }
 
+# pkg_installed NAME — is the apt/brew package already installed?
+pkg_installed() {
+  if [ "$OS" = "linux" ]; then
+    dpkg-query -W -f='${Status}' "$1" 2>/dev/null | grep -q 'install ok installed'
+  else
+    have brew && brew list --formula "$1" >/dev/null 2>&1
+  fi
+}
+
+# install_pkgs — install only the missing CORE_PKGS. On an already-set-up
+# machine this is a no-op, so a re-run needs no sudo password (and works
+# from non-interactive shells where sudo can't prompt).
 install_pkgs() {
+  local p missing=""
+  for p in $CORE_PKGS; do
+    pkg_installed "$p" || missing="$missing $p"
+  done
+  missing="${missing# }"
+  if [ -z "$missing" ]; then
+    log "core packages present, skipping"
+    return 0
+  fi
+  log "installing missing packages: $missing"
   if [ "$OS" = "linux" ]; then
     run sudo apt-get update
-    # shellcheck disable=SC2086  # word-split CORE_PKGS into separate args
-    run sudo DEBIAN_FRONTEND=noninteractive apt-get install -y $CORE_PKGS
+    # shellcheck disable=SC2086  # word-split $missing into separate args
+    run sudo DEBIAN_FRONTEND=noninteractive apt-get install -y $missing
   else
     ensure_homebrew
-    # shellcheck disable=SC2086  # word-split CORE_PKGS into separate args
-    run brew install $CORE_PKGS
+    # shellcheck disable=SC2086  # word-split $missing into separate args
+    run brew install $missing
   fi
 }
 
@@ -281,10 +305,21 @@ parse_args() {
   done
 }
 
-on_err() { warn "failed at line $1 (last step did not complete)"; }
+# on_err CMD — report the failing command and its call chain. $LINENO alone
+# points inside run() (the generic "$@"), which says nothing about the step.
+on_err() {
+  local i where=""
+  for ((i = 1; i < ${#FUNCNAME[@]}; i++)); do
+    where="$where ${FUNCNAME[$i]}:${BASH_LINENO[$((i - 1))]}"
+  done
+  local cmd="$1"
+  [ "$cmd" = '"$@"' ] && cmd="$RUN_CMD"
+  warn "command failed: $cmd"
+  warn "call stack:$where"
+}
 
 main() {
-  trap 'on_err $LINENO' ERR
+  trap 'on_err "$BASH_COMMAND"' ERR
   parse_args "$@"
   [ "$SHOW_HELP" -eq 1 ] && exit 0
   [ "${EUID:-$(id -u)}" -ne 0 ] || die "do not run as root; sudo is used only where needed"
