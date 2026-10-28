@@ -148,9 +148,11 @@ if [[ -z "$_OMP_INITIALIZED" ]]; then
 fi
 
 # zoxide — smarter cd: `cd <partial>` jumps to your most-used matching dir.
-# Guarded so a missing binary never breaks shell startup.
+# Guarded so a missing binary never breaks shell startup. Skipped in Claude Code
+# ($CLAUDECODE): its shell snapshot keeps the cd function but not the chpwd hook,
+# so zoxide's doctor printed a "configuration issue" warning on every command.
 # Install: sudo apt-get install -y zoxide
-if command -v zoxide >/dev/null 2>&1; then
+if [[ -z "$CLAUDECODE" ]] && command -v zoxide >/dev/null 2>&1; then
   eval "$(zoxide init zsh --cmd cd)"
 fi
 
