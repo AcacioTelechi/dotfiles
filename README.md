@@ -11,6 +11,7 @@ dotfiles/
 ├── zsh/{.zshrc,.zprofile}                         → ~/.zshrc, ~/.zprofile
 ├── ohmyposh/.config/ohmyposh/base.toml           → ~/.config/ohmyposh/
 ├── ghostty/.config/ghostty/config                → ~/.config/ghostty/
+├── git/.config/git/config                         → ~/.config/git/
 └── bin/.local/bin/wake_claude                     → ~/.local/bin/
 ```
 
@@ -130,6 +131,13 @@ stow -nv -t ~ nvim          # dry-run: show what would happen
   `--config ~/.config/ohmyposh/base.toml`; that file is tracked here so a
   fresh machine gets the real prompt (without it oh-my-posh prints
   `CONFIG NOT FOUND` and the prompt renders as tofu).
+
+### git
+- Commit identity (`user.name`, `user.email`) in `~/.config/git/config`, so
+  commits work on a fresh machine (agents' memory commits fail with
+  "Author identity unknown" without it). XDG location on purpose: git reads
+  it alongside `~/.gitconfig`, which `gh auth setup-git` writes machine-locally
+  and must not be stowed over.
 
 ### ghostty
 - Terminal emulator config (`~/.config/ghostty/config`). Sets

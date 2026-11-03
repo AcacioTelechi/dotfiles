@@ -7,7 +7,7 @@ REPO_DIR="$HOME/dotfiles"
 FONT_VERSION="v3.2.1"
 FONT_NAME="JetBrainsMono"
 FONT_CASK="font-jetbrains-mono-nerd-font"   # macOS: Homebrew cask name
-STOW_PACKAGES="nvim tmux zsh ohmyposh ghostty bin"
+STOW_PACKAGES="nvim tmux zsh ohmyposh ghostty git bin"
 CORE_PKGS="git stow zsh tmux neovim ripgrep fzf zoxide curl"
 LINUX_PKGS="unzip fontconfig"   # Linux font install: unzip + fc-cache
 
